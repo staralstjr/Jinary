@@ -1,5 +1,5 @@
 syntax = "proto3";
-package com.jinary.test;
+option java_package = "com.jinary.test";
 
 message UserResponse {
   int32 id = 1;
