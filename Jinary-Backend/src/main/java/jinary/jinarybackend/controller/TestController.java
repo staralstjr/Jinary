@@ -14,7 +14,6 @@ public class TestController {
                 .setEmail("test@skhu.ac.kr")
                 .build();
 
-        // 바이너리로 변환하여 전송
         return user.toByteArray();
     }
 }
