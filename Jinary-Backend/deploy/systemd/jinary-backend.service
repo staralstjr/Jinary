@@ -1,0 +1,14 @@
+[Unit]
+Description=Jinary Backend Spring Boot Application
+After=network.target
+
+[Service]
+User=www-data
+WorkingDirectory=/opt/jinary/backend
+ExecStart=/usr/bin/java -jar /opt/jinary/backend/app.jar
+Restart=always
+RestartSec=5
+Environment=SERVER_PORT=8080
+
+[Install]
+WantedBy=multi-user.target
