@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "proto:gen": "pbjs -t static-module -w es6 -o src/proto/user_proto_bundle.js src/proto/user.proto",
+    "proto:gen": "npx pbjs --es6 src/proto/user_proto_bundle.js src/proto/user_proto_bundle.proto",
     "lint": "eslint .",
     "preview": "vite preview"
   },
