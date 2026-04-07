@@ -6,7 +6,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 function formatBytes(bytes) {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB'];
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   // Math.log()로 단위를 결정합니다
   // 예: 1500 → log(1500)/log(1024) ≈ 1.05 → floor → 1 → "KB"
   const i = Math.floor(Math.log(bytes) / Math.log(k));
