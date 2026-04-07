@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "proto:gen": "npx pbjs --es6 src/proto/user_proto_bundle.js src/proto/user_proto_bundle.proto",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "protobufjs": "^8.0.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
