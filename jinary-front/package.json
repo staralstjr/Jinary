@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "proto:gen": "npx pbjs --es6 src/proto/user_proto_bundle.js src/proto/user_proto_bundle.proto",
+    "proto:gen:payload": "npx pbjs --es6 src/proto/user_payload.js src/proto/user_payload.proto",
     "lint": "eslint .",
     "preview": "vite preview"
   },
