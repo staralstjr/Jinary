@@ -25,7 +25,7 @@ function create(config: JinaryConfig) {
                 timeoutId = setTimeout(() => controller.abort(), config.timeout);
             }
             const mergedHeaders = {                                                                                
-                Accept: 'application/x-protobuf',                                                                  
+                Accept: 'application/x-jinary',                                                                  
                 ...config.headers,                                                                               
             };
             const response = await fetch(fullURL, {
@@ -68,7 +68,7 @@ async function get<T>(
     decodeFunction: (binary: Uint8Array) => T
   ): Promise<JinaryResponse<T>> {                                                                                                          
     const response = await fetch(url, {
-        headers: { Accept: 'application/x-protobuf' },
+        headers: { Accept: 'application/x-jinary' },
       });
 
       if (!response.ok) {
@@ -101,5 +101,41 @@ async function get<T>(
       };
   } 
 
-export const jinary = { create, get };
+async function post<T>(
+    url: string,
+    binary: Uint8Array,
+): Promise<JinaryResponse<T>> {
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-jinary',
+            Accept: 'application/json',
+        },
+        body: binary as BodyInit,
+    });
+
+    if(!response.ok) {
+        throw new Error(
+            `서버 응답 오류: ${response.status} ${response.statusText}`,
+        );
+
+    }
+    const json = (await response.json()) as T;
+
+    const protobufSize = binary.byteLength;
+    const jsonSize = new TextEncoder().encode(JSON.stringify(json)).byteLength;                                                                                                         
+                                                                                                                                                                                        
+    return {                            
+        data: json,                                                                                                                                                                     
+        meta: {                                                                                                                                                                         
+            protobufSize,
+            jsonSize,                                                                                                                                                                   
+            rawHex: Array.from(binary.slice(0, 50))                                                                                                                                   
+                .map((b) => b.toString(16).padStart(2, '0'))
+                .join(' '),             
+        },
+    }; 
+}
+
+export const jinary = { create, get, post };
 export type { JinaryMeta, JinaryResponse };

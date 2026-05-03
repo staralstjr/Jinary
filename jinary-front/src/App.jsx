@@ -1,6 +1,7 @@
-import React from 'react';                                                                                         
-import { useJinary } from './hook/useJinary';                                                                      
-import { decodeUserList } from './proto/user_proto_bundle.js';
+import React, { useState } from 'react';                 
+import { jinary } from './core/jinary';
+import { useJinary } from './hook/useJinary';
+import { encodeUserPayload, decodeUserPayload } from './proto/user_payload.js';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 
 function formatBytes(bytes) {
@@ -14,11 +15,42 @@ function formatBytes(bytes) {
 }
 
 function App() {
-  const { data, loading, error, meta, fetchData } = useJinary(                                                       
-    BACKEND_URL,  
-    decodeUserList
+  const { data, loading, error, meta, fetchData } = useJinary(
+    BACKEND_URL + '/test/binary',
+    decodeUserPayload,
   );
+  const [postResult, setPostResult]   = useState(null);                                                                                                                                 
+  const [postError,  setPostError]    = useState(null);                                                                                                                                 
+  const [postLoading, setPostLoading] = useState(false); 
 
+  async function handlePostTest() {                                                                                                                                                   
+    setPostLoading(true);                                                                                                                                                               
+    setPostError(null);                                                                                                                                                               
+    try {                                                                                                                                                                               
+      // 1) JS 객체                                                                                                                                                                   
+      const payload = {                                                                                                                                                                 
+        id: 202417051,                                                                                                                                                                
+        name: 'Sanghwa',                    
+        email: 'test@skhu.ac.kr',                                                                                                                                                       
+      };                                
+
+      // 2) 바이너리 인코딩                                                                                                                                                             
+      const binary = encodeUserPayload(payload);                                                                                                                             
+
+      // 3) 바이너리 POST → JSON 응답                                                                                                                                                   
+      const result = await jinary.post(                                                                                                                                               
+        BACKEND_URL + '/test/json-from-binary',                                                                                                                                         
+        binary,                                                                                                                                                                         
+      );                                                                                                                                                                                
+
+      setPostResult({ sent: payload, received: result });                                                                                                                               
+    } catch (e) {                       
+      setPostError(e instanceof Error ? e.message : String(e));                                                                                                                         
+    } finally {                                                                                                                                                                         
+      setPostLoading(false);            
+    }                                                                                                                                                                                   
+  }
+  
   const savedPercent = meta.jsonSize > 0                                                                             
     ? ((1 - meta.protobufSize / meta.jsonSize) * 100).toFixed(1)
     : '0';
@@ -157,7 +189,7 @@ function App() {
               {savedPercent}% 작음
             </div>
             <div style={{ fontSize: '13px', opacity: 0.8 }}>
-              {data.users.length}명 기준 |{' '}
+              단일 객체 기준 |{' '}
               {formatBytes(meta.jsonSize - meta.protobufSize)} 절감
             </div>
           </div>
@@ -213,35 +245,93 @@ function App() {
                 color: '#333',
               }}
             >
-              디코딩 검증 (처음 3명)
+              디코딩 검증
             </div>
-            {data.users.slice(0, 3).map((user, i) => (
-              <div
-                key={i}
-                style={{
-                  padding: '12px',
-                  marginBottom: '8px',
-                  borderRadius: '8px',
-                  background: 'white',
-                  border: '1px solid #eee',
-                  textAlign: 'left',
-                  fontSize: '14px',
-                }}
-              >
-                <strong>{user.name}</strong>
-                <span style={{ color: '#999', marginLeft: '8px' }}>
-                  {user.id} | {user.email} | {user.age}세
-                </span>
-              </div>
-            ))}
+            <div
+              style={{
+                padding: '12px',
+                marginBottom: '8px',
+                borderRadius: '8px',
+                background: 'white',
+                border: '1px solid #eee',
+                textAlign: 'left',
+                fontSize: '14px',
+              }}
+            >
+              <strong>{data.name}</strong>
+              <span style={{ color: '#999', marginLeft: '8px' }}>
+                {data.id} | {data.email}
+              </span>
+            </div>
             <div style={{ fontSize: '12px', color: '#999', marginTop: '8px' }}>
               백엔드 바이너리 → Protobuf 디코딩 → JS 객체 복원 성공
             </div>
           </div>
         </div>
       )}
+      <div                                                                                                                                                                              
+          style={{                                                                                                                                                                        
+            marginTop: '40px',                                                                                                                                                          
+            padding: '20px',                                                                                                                                                              
+            borderRadius: '12px',                                                                                                                                                       
+            border: '2px solid #aa3bff',      
+            background: '#faf5ff',        
+          }}
+        >                                                                                                                                                                                 
+          <h2 style={{ fontSize: '20px', marginBottom: '12px' }}>
+            Round-trip 테스트 (프론트 → 백엔드)                                                                                                                                           
+          </h2>                                                                                                                                                                           
+          <p style={{ color: '#666', marginBottom: '16px', fontSize: '14px' }}>
+            JS 객체 → 바이너리 인코딩 → POST → 백엔드가 자바 객체로 자동 디코딩 → JSON 응답                                                                                               
+          </p>                                                                                                                                                                            
+
+          <button                                                                                                                                                                         
+            onClick={handlePostTest}                                                                                                                                                      
+            disabled={postLoading}
+            style={{                                                                                                                                                                      
+              padding: '12px 24px',                                                                                                                                                     
+              background: postLoading ? '#ccc' : '#aa3bff',
+              color: 'white',                                                                                                                                                             
+              border: 'none',                 
+              borderRadius: '8px',                                                                                                                                                        
+              cursor: postLoading ? 'wait' : 'pointer',                                                                                                                                 
+              fontWeight: 'bold',                                                                                                                                                         
+            }}                                
+          >                                                                                                                                                                               
+            {postLoading ? '전송 중...' : '바이너리로 POST 보내기'}                                                                                                                     
+          </button>                                                                                                                                                                       
+
+          {postError && (                                                                                                                                                                 
+            <div style={{ marginTop: '16px', color: '#c92a2a' }}>                                                                                                                       
+              에러: {postError}                                                                                                                                                           
+            </div>                        
+          )}                                                                                                                                                                              
+
+          {postResult && (
+            <div style={{ marginTop: '20px', display: 'grid', gap: '12px' }}>                                                                                                             
+              <div>                                                                                                                                                                     
+                <strong>보낸 객체:</strong>
+                <pre style={{ background: '#1e1e2e', color: '#a6e3a1', padding: '12px', borderRadius: '6px' }}>
+                  {JSON.stringify(postResult.sent, null, 2)}                                                                                                                              
+                </pre>                        
+              </div>                                                                                                                                                                      
+              <div>                                                                                                                                                                       
+                <strong>백엔드가 돌려준 JSON:</strong>                                                                                                                                    
+                <pre style={{ background: '#1e1e2e', color: '#a6e3a1', padding: '12px', borderRadius: '6px' }}>                                                                           
+                  {JSON.stringify(postResult.received.data, null, 2)}                                                                                                                     
+                </pre>                                                                                                                                                                  
+              </div>                                                                                                                                                                      
+              <div style={{ fontSize: '14px', color: '#444' }}>                                                                                                                           
+                업로드 바이너리 크기: <strong>{postResult.received.meta.protobufSize} bytes</strong>                                                                                      
+                {' / '}                                                                                                                                                                   
+                같은 데이터의 JSON 크기: <strong>{postResult.received.meta.jsonSize} bytes</strong>                                                                                       
+              </div>                                                                                                                                                                    
+            </div>                                                                                                                                                                        
+          )}                                                                                                                                                                              
+        </div>
     </div>
   );
+  
 }
 
 export default App;
