@@ -25,7 +25,7 @@ function create(config: JinaryConfig) {
                 timeoutId = setTimeout(() => controller.abort(), config.timeout);
             }
             const mergedHeaders = {                                                                                
-                Accept: 'application/x-protobuf',                                                                  
+                Accept: 'application/x-jinary',                                                                  
                 ...config.headers,                                                                               
             };
             const response = await fetch(fullURL, {
@@ -68,7 +68,7 @@ async function get<T>(
     decodeFunction: (binary: Uint8Array) => T
   ): Promise<JinaryResponse<T>> {                                                                                                          
     const response = await fetch(url, {
-        headers: { Accept: 'application/x-protobuf' },
+        headers: { Accept: 'application/x-jinary' },
       });
 
       if (!response.ok) {
