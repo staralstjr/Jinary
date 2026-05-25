@@ -1,6 +1,6 @@
-import React, { useState } from 'react';                 
-import { jinary } from './core/jinary';
+import React, { useState } from 'react';
 import { useJinary } from './hook/useJinary';
+import { useJinaryMutation } from './hook/useJinaryMutation';
 import { encodeUserPayload, decodeUserPayload } from './proto/user_payload.js';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 
@@ -19,36 +19,31 @@ function App() {
     BACKEND_URL + '/test/binary',
     decodeUserPayload,
   );
-  const [postResult, setPostResult]   = useState(null);                                                                                                                                 
-  const [postError,  setPostError]    = useState(null);                                                                                                                                 
-  const [postLoading, setPostLoading] = useState(false); 
 
-  async function handlePostTest() {                                                                                                                                                   
-    setPostLoading(true);                                                                                                                                                               
-    setPostError(null);                                                                                                                                                               
-    try {                                                                                                                                                                               
-      // 1) JS 객체                                                                                                                                                                   
-      const payload = {                                                                                                                                                                 
-        id: 202417051,                                                                                                                                                                
-        name: 'Sanghwa',                    
-        email: 'test@skhu.ac.kr',                                                                                                                                                       
-      };                                
+  const {
+    mutate: postUser,
+    data: postReceived,
+    loading: postLoading,
+    error: postError,
+    meta: postMeta,
+  } = useJinaryMutation(
+    BACKEND_URL + '/test/json-from-binary',
+    encodeUserPayload,
+  );
+  const [postSent, setPostSent] = useState(null);
 
-      // 2) 바이너리 인코딩                                                                                                                                                             
-      const binary = encodeUserPayload(payload);                                                                                                                             
-
-      // 3) 바이너리 POST → JSON 응답                                                                                                                                                   
-      const result = await jinary.post(                                                                                                                                               
-        BACKEND_URL + '/test/json-from-binary',                                                                                                                                         
-        binary,                                                                                                                                                                         
-      );                                                                                                                                                                                
-
-      setPostResult({ sent: payload, received: result });                                                                                                                               
-    } catch (e) {                       
-      setPostError(e instanceof Error ? e.message : String(e));                                                                                                                         
-    } finally {                                                                                                                                                                         
-      setPostLoading(false);            
-    }                                                                                                                                                                                   
+  async function handlePostTest() {
+    const payload = {
+      id: 202417051,
+      name: 'Sanghwa',
+      email: 'test@skhu.ac.kr',
+    };
+    setPostSent(payload);
+    try {
+      await postUser(payload);
+    } catch {
+      // 에러 상태는 훅 내부에서 관리됨
+    }
   }
   
   const savedPercent = meta.jsonSize > 0                                                                             
@@ -307,26 +302,26 @@ function App() {
             </div>                        
           )}                                                                                                                                                                              
 
-          {postResult && (
-            <div style={{ marginTop: '20px', display: 'grid', gap: '12px' }}>                                                                                                             
-              <div>                                                                                                                                                                     
+          {postReceived && (
+            <div style={{ marginTop: '20px', display: 'grid', gap: '12px' }}>
+              <div>
                 <strong>보낸 객체:</strong>
                 <pre style={{ background: '#1e1e2e', color: '#a6e3a1', padding: '12px', borderRadius: '6px' }}>
-                  {JSON.stringify(postResult.sent, null, 2)}                                                                                                                              
-                </pre>                        
-              </div>                                                                                                                                                                      
-              <div>                                                                                                                                                                       
-                <strong>백엔드가 돌려준 JSON:</strong>                                                                                                                                    
-                <pre style={{ background: '#1e1e2e', color: '#a6e3a1', padding: '12px', borderRadius: '6px' }}>                                                                           
-                  {JSON.stringify(postResult.received.data, null, 2)}                                                                                                                     
-                </pre>                                                                                                                                                                  
-              </div>                                                                                                                                                                      
-              <div style={{ fontSize: '14px', color: '#444' }}>                                                                                                                           
-                업로드 바이너리 크기: <strong>{postResult.received.meta.protobufSize} bytes</strong>                                                                                      
-                {' / '}                                                                                                                                                                   
-                같은 데이터의 JSON 크기: <strong>{postResult.received.meta.jsonSize} bytes</strong>                                                                                       
-              </div>                                                                                                                                                                    
-            </div>                                                                                                                                                                        
+                  {JSON.stringify(postSent, null, 2)}
+                </pre>
+              </div>
+              <div>
+                <strong>백엔드가 돌려준 JSON:</strong>
+                <pre style={{ background: '#1e1e2e', color: '#a6e3a1', padding: '12px', borderRadius: '6px' }}>
+                  {JSON.stringify(postReceived, null, 2)}
+                </pre>
+              </div>
+              <div style={{ fontSize: '14px', color: '#444' }}>
+                업로드 바이너리 크기: <strong>{postMeta.protobufSize} bytes</strong>
+                {' / '}
+                같은 데이터의 JSON 크기: <strong>{postMeta.jsonSize} bytes</strong>
+              </div>
+            </div>
           )}                                                                                                                                                                              
         </div>
     </div>
