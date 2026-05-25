@@ -1,0 +1,29 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
+
+dependencies {
+    api 'com.google.protobuf:protobuf-java:3.25.1'
+    api 'com.google.protobuf:protobuf-java-util:3.25.1'
+    api 'com.fasterxml.jackson.core:jackson-databind'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifactId = 'jinary-core'
+
+            pom {
+                name = 'jinary-core'
+                description = 'Core annotation and protobuf codec support for Jinary'
+            }
+        }
+    }
+}

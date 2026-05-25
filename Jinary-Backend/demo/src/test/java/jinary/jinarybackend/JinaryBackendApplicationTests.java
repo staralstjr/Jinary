@@ -9,5 +9,4 @@ class JinaryBackendApplicationTests {
     @Test
     void contextLoads() {
     }
-
 }

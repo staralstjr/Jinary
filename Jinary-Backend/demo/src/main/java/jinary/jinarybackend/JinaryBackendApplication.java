@@ -9,5 +9,4 @@ public class JinaryBackendApplication {
     public static void main(String[] args) {
         SpringApplication.run(JinaryBackendApplication.class, args);
     }
-
 }

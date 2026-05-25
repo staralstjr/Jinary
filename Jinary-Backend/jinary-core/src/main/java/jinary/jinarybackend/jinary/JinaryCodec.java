@@ -9,8 +9,6 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
-import org.springframework.stereotype.Component;
-
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -19,7 +17,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@Component
 public class JinaryCodec {
 
     private final JinarySchemaGenerator schemaGenerator;

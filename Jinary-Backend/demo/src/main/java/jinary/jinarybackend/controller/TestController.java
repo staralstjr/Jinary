@@ -1,5 +1,9 @@
 package jinary.jinarybackend.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jinary.jinarybackend.dto.UserPayload;
 import jinary.jinarybackend.jinary.Jinary;
 import jinary.jinarybackend.jinary.JinaryCodec;
@@ -13,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
 
+@Tag(name = "Jinary Demo", description = "Sample endpoints for JSON and Jinary binary payload exchange.")
 @RestController
 public class TestController {
     private final JinaryCodec jinaryCodec;
@@ -20,22 +25,30 @@ public class TestController {
     public TestController(JinaryCodec jinaryCodec) {
         this.jinaryCodec = jinaryCodec;
     }
-    //자바객체를 자바객체로 변환하여 반환
+
+    @Operation(summary = "Return DTO as JSON")
     @GetMapping(value = "/test/json", produces = MediaType.APPLICATION_JSON_VALUE)
     public UserPayload getJsonData() {
         return new UserPayload(202417051, "Sanghwa", "test@skhu.ac.kr");
     }
 
-    //자바객체를 BinaryData로 변환하여 반환
+    // 응답은 자바객체, JSON이 아니라 Jinary컨버터를 통해 바이너리로 직렬화한 값을 반환
     @Jinary
+    @Operation(summary = "Return DTO as Jinary binary payload")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Jinary-encoded protobuf binary",
+            content = @Content(mediaType = JinaryMediaTypes.APPLICATION_JINARY)
+    )
     @GetMapping(value = "/test/binary", produces = JinaryMediaTypes.APPLICATION_JINARY)
     public UserPayload getBinaryData() {
         return new UserPayload(202417051, "Sanghwa", "test@skhu.ac.kr");
     }
 
-    //프론트가 보내는 것은 UserPayload값이 아니라, Jinary 타입의 바이너리 데이터
-    //하지만 스프링이 요청을 받을 때, 자동으로 바이너리 데이터를 읽고 UserPayload형태의 자바 객체로 변환
+    // 파라미터는 바이너리 데이터, 하지만 Jinary를 통해 자동으로 UserPayload라는 자바 객체로 바꿔줌
+    // DTO(자바객체)통신으로 보이지만 프론트에서 JSON-바이너리 역직렬화가 구현되어있다면, 바이너리 데이터가 통신하면서 속도 증가
     @Jinary
+    @Operation(summary = "Decode Jinary request body and return JSON DTO")
     @PostMapping(
             value = "/test/json-from-binary",
             consumes = JinaryMediaTypes.APPLICATION_JINARY,
@@ -45,8 +58,7 @@ public class TestController {
         return request;
     }
 
-    //이것은 @Jinary어노테이션을 사용한 것이 아닌 일반 바이너리 데이터를 받았을 때, 스프링에서 수동으로 자바 객체로 변환
-    // 위 /test/josn-from-binary와 비교하여 테스트 용도
+    @Operation(summary = "Decode raw Jinary binary request body and return JSON string")
     @PostMapping(
             value = "/test/json-from-raw-binary",
             consumes = JinaryMediaTypes.APPLICATION_JINARY,

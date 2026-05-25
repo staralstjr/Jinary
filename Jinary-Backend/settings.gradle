@@ -1,1 +1,4 @@
 rootProject.name = 'Jinary-Backend'
+include 'jinary-core'
+include 'jinary-spring-boot-starter'
+include 'demo'

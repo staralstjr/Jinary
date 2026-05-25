@@ -1,57 +1,34 @@
 plugins {
-    id 'java'
-    id 'org.springframework.boot' version '4.0.3'
-    id 'io.spring.dependency-management' version '1.1.7'
-    id 'com.google.protobuf' version '0.9.4'
+    id 'org.springframework.boot' version '4.0.3' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
 }
 
-group = 'Jinary'
-version = '0.0.1-SNAPSHOT'
-description = 'Jinary-Backend'
+allprojects {
+    group = 'jinary'
+    version = '0.0.1-SNAPSHOT'
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+    repositories {
+        mavenCentral()
     }
 }
 
-repositories {
-    mavenCentral()
-}
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.spring.dependency-management'
 
-dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    implementation 'com.google.protobuf:protobuf-java:3.25.1'
-    implementation 'com.google.protobuf:protobuf-java-util:3.25.1'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
-    testImplementation 'org.springframework.boot:spring-boot-test-autoconfigure'
-
-}
-
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:3.25.1"
-    }
-    generateProtoTasks {
-        all().each { task ->
-            task.builtins {
-                java {}
-            }
+    dependencyManagement {
+        imports {
+            mavenBom 'org.springframework.boot:spring-boot-dependencies:4.0.3'
         }
     }
-}
 
-sourceSets {
-    main {
-        java {
-            srcDirs 'build/generated/source/proto/main/java'
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(17)
         }
     }
-}
 
-tasks.named('test') {
-    useJUnitPlatform()
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
 }
