@@ -1,6 +1,10 @@
-interface JinaryMeta {                                                                                                                   
+import * as protobuf from 'protobufjs';
+// @ts-expect-error protobufjs/ext/descriptor는 타입 정의가 없지만, import 시점에 Root.fromDescriptor를 활성화한다.
+import descriptor from 'protobufjs/ext/descriptor';
+
+interface JinaryMeta {
     protobufSize: number;
-    jsonSize: number;                                                                                                                      
+    jsonSize: number;
     rawHex: string;
 }
 
@@ -137,5 +141,42 @@ async function post<T>(
     }; 
 }
 
-export const jinary = { create, get, post };
+const schemaCache = new Map<string, protobuf.Type>();
+
+async function loadSchema(
+    baseURL: string,
+    typeName: string,
+): Promise<protobuf.Type> {
+    const cached = schemaCache.get(typeName);
+    if (cached) return cached;
+
+    const response = await fetch(`${baseURL}/jinary/schema/${typeName}`, {
+        headers: { Accept: 'application/x-protobuf' },
+    });
+    if (!response.ok) {
+        throw new Error(
+            `스키마 로드 실패: ${response.status} ${response.statusText}`,
+        );
+    }
+
+    const fileBytes = new Uint8Array(await response.arrayBuffer());
+
+    // 백엔드는 단일 FileDescriptorProto를 보내지만, Root.fromDescriptor는 FileDescriptorSet을 기대한다.
+    const FileDescriptorProto = (descriptor as any).FileDescriptorProto;
+    const FileDescriptorSet = (descriptor as any).FileDescriptorSet;
+    const fileDesc = FileDescriptorProto.decode(fileBytes);
+    const fileSet = FileDescriptorSet.create({ file: [fileDesc] });
+    const root = (protobuf.Root as any).fromDescriptor(fileSet);
+
+    // JinarySchemaGenerator는 package="jinary.dynamic" 고정, 메시지명은 Java simple name.
+    const simpleName = typeName.split('.').pop() ?? typeName;
+    const messageType = root.lookupType(
+        `jinary.dynamic.${simpleName}`,
+    ) as protobuf.Type;
+
+    schemaCache.set(typeName, messageType);
+    return messageType;
+}
+
+export const jinary = { create, get, post, loadSchema };
 export type { JinaryMeta, JinaryResponse };
