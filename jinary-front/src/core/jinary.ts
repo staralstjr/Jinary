@@ -1,5 +1,4 @@
 import * as protobuf from 'protobufjs';
-// @ts-expect-error protobufjs/ext/descriptor는 타입 정의가 없지만, import 시점에 Root.fromDescriptor를 활성화한다.
 import descriptor from 'protobufjs/ext/descriptor';
 
 interface JinaryMeta {
@@ -199,14 +198,14 @@ async function loadSchema(
 
     const fileBytes = new Uint8Array(await response.arrayBuffer());
 
-    // 백엔드는 단일 FileDescriptorProto를 보내지만, Root.fromDescriptor는 FileDescriptorSet을 기대한다.
+    // 백엔드는 단일 FileDescriptorProto를 보내지만, Root.fromDescriptor는 FileDescriptorSet을 기대하고있습니다.
     const FileDescriptorProto = (descriptor as any).FileDescriptorProto;
     const FileDescriptorSet = (descriptor as any).FileDescriptorSet;
     const fileDesc = FileDescriptorProto.decode(fileBytes);
     const fileSet = FileDescriptorSet.create({ file: [fileDesc] });
     const root = (protobuf.Root as any).fromDescriptor(fileSet);
 
-    // JinarySchemaGenerator는 package="jinary.dynamic" 고정, 메시지명은 Java simple name.
+    // JinarySchemaGenerator는 package="jinary.dynamic" 고정, 메시지명은 Java simple name이 됩니다.
     const simpleName = typeName.split('.').pop() ?? typeName;
     const messageType = root.lookupType(
         `jinary.dynamic.${simpleName}`,
