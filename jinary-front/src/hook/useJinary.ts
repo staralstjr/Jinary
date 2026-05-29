@@ -5,17 +5,21 @@ interface UseJinaryOptions {
   autoFetch?: boolean;
 }
 
-// decodeFunction은 외부에서 주입받도록 설계하여 확장성을 높임
+interface UseJinarySchemaConfig {
+  schema: string;
+  baseURL: string;
+}
+
 export const useJinary = <T>(
   url: string,
-  decodeFunction: (binary: Uint8Array) => T,
+  config: UseJinarySchemaConfig,
   options: UseJinaryOptions = {},
 ) => {
+  const { schema, baseURL } = config;
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 성능 측정을 위한 메타데이터 상태
   const [meta, setMeta] = useState<JinaryMeta>({
     protobufSize: 0,
     jsonSize: 0,
@@ -27,7 +31,7 @@ export const useJinary = <T>(
     setError(null);
 
     try {
-      const result = await jinary.get(url, decodeFunction);                                                                                
+      const result = await jinary.get<T>(url, { schema, baseURL });
       setData(result.data);
       setMeta(result.meta);
     } catch (err) {
@@ -35,7 +39,7 @@ export const useJinary = <T>(
     } finally {
       setLoading(false);
     }
-  }, [url, decodeFunction]);
+  }, [url, schema, baseURL]);
 
   useEffect(() => {
     if (options.autoFetch) {
@@ -43,6 +47,5 @@ export const useJinary = <T>(
     }
   }, [options.autoFetch, fetchData]);
 
-  // 반환값: UI에 필요한 모든 상태와 fetch 함수
   return { data, loading, error, meta, fetchData };
 };

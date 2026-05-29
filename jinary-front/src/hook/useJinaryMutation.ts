@@ -1,11 +1,16 @@
 import { useState, useCallback } from 'react';
 import { jinary, JinaryMeta, JinaryResponse } from '../core/jinary';
 
-// encodeFunction은 외부에서 주입받아 확장성을 높임 (useJinary의 decodeFunction과 대칭)
-export const useJinaryMutation = <TInput, TOutput>(
+interface UseJinaryMutationConfig {
+  schema: string;
+  baseURL: string;
+}
+
+export const useJinaryMutation = <TInput extends object, TOutput>(
   url: string,
-  encodeFunction: (input: TInput) => Uint8Array,
+  config: UseJinaryMutationConfig,
 ) => {
+  const { schema, baseURL } = config;
   const [data, setData] = useState<TOutput | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,8 +26,10 @@ export const useJinaryMutation = <TInput, TOutput>(
       setError(null);
 
       try {
-        const binary = encodeFunction(input);
-        const result = await jinary.post<TOutput>(url, binary);
+        const result = await jinary.post<TOutput>(url, input, {
+          schema,
+          baseURL,
+        });
         setData(result.data);
         setMeta(result.meta);
         return result;
@@ -33,7 +40,7 @@ export const useJinaryMutation = <TInput, TOutput>(
         setLoading(false);
       }
     },
-    [url, encodeFunction],
+    [url, schema, baseURL],
   );
 
   return { mutate, data, loading, error, meta };

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useJinary } from './hook/useJinary';
 import { useJinaryMutation } from './hook/useJinaryMutation';
-import { encodeUserPayload, decodeUserPayload } from './proto/user_payload.js';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
+const SCHEMA_CONFIG = { schema: 'UserPayload', baseURL: BACKEND_URL };
 
 function formatBytes(bytes) {
   if (bytes === 0) return '0 Bytes';
@@ -17,7 +17,7 @@ function formatBytes(bytes) {
 function App() {
   const { data, loading, error, meta, fetchData } = useJinary(
     BACKEND_URL + '/test/binary',
-    decodeUserPayload,
+    SCHEMA_CONFIG,
   );
 
   const {
@@ -28,7 +28,7 @@ function App() {
     meta: postMeta,
   } = useJinaryMutation(
     BACKEND_URL + '/test/json-from-binary',
-    encodeUserPayload,
+    SCHEMA_CONFIG,
   );
   const [postSent, setPostSent] = useState(null);
 
