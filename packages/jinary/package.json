@@ -1,0 +1,23 @@
+{
+  "name": "jinary",
+  "version": "0.0.1",
+  "description": "axios처럼 간편한 바이너리 통신 라이브러리 (Zero-Configuration Protobuf bridge)",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./react": "./src/react/index.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "protobufjs": "^8.0.0"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19"
+  },
+  "devDependencies": {
+    "react": "^19.2.4",
+    "@types/react": "^19.2.14"
+  }
+}

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useJinary } from './hook/useJinary';
-import { useJinaryMutation } from './hook/useJinaryMutation';
+import { useJinary, useJinaryMutation } from 'jinary/react';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 const SCHEMA_CONFIG = { schema: 'UserPayload', baseURL: BACKEND_URL };
 

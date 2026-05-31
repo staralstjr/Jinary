@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { jinary, JinaryMeta, JinaryResponse } from '../core/jinary';
+import { jinary } from '..';
+import type { JinaryMeta, JinaryResponse } from '..';
 
 interface UseJinaryMutationConfig {
   schema: string;

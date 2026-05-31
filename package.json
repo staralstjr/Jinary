@@ -1,0 +1,12 @@
+{
+  "name": "jinary-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "jinary-front"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w jinary-front",
+    "build": "npm run build -w jinary-front"
+  }
+}

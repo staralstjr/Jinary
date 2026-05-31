@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
-import { jinary, JinaryMeta } from '../core/jinary';
+import { jinary } from '..';
+import type { JinaryMeta } from '..';
 
 interface UseJinaryOptions {
   autoFetch?: boolean;
