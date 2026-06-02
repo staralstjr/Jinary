@@ -8,6 +8,7 @@ import jinary.jinarybackend.dto.UserPayload;
 import jinary.jinarybackend.jinary.Jinary;
 import jinary.jinarybackend.jinary.JinaryCodec;
 import jinary.jinarybackend.jinary.JinaryMediaTypes;
+import jinary.jinarybackend.jinary.JinaryStream;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
+import java.util.stream.Stream;
 
 @Tag(name = "Jinary Demo", description = "Sample endpoints for JSON and Jinary binary payload exchange.")
 @RestController
@@ -43,6 +45,22 @@ public class TestController {
     @GetMapping(value = "/test/binary", produces = JinaryMediaTypes.APPLICATION_JINARY)
     public UserPayload getBinaryData() {
         return new UserPayload(202417051, "Sanghwa", "test@skhu.ac.kr");
+    }
+
+    @JinaryStream
+    @Operation(summary = "Stream DTOs as length-delimited Jinary binary payloads")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Length-delimited Jinary protobuf stream",
+            content = @Content(mediaType = JinaryMediaTypes.APPLICATION_JINARY_STREAM)
+    )
+    @GetMapping(value = "/test/stream/users", produces = JinaryMediaTypes.APPLICATION_JINARY_STREAM)
+    public Stream<UserPayload> streamUsers() {
+        return Stream.of(
+                new UserPayload(1, "Sanghwa", "sanghwa@example.com"),
+                new UserPayload(2, "Ralph", "ralph@example.com"),
+                new UserPayload(3, "Proto", "proto@example.com")
+        );
     }
 
     // 파라미터는 바이너리 데이터, 하지만 Jinary를 통해 자동으로 UserPayload라는 자바 객체로 바꿔줌

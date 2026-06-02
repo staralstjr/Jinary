@@ -1,18 +1,23 @@
 package jinary.jinarybackend;
 
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
+import com.google.protobuf.DynamicMessage;
 import jinary.jinarybackend.dto.UserPayload;
 import jinary.jinarybackend.jinary.JinaryCodec;
 import jinary.jinarybackend.jinary.JinaryMediaTypes;
+import jinary.jinarybackend.jinary.JinarySchemaGenerator;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
+import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,6 +29,9 @@ class JinaryHttpMessageConverterTest {
 
     @Autowired
     private JinaryCodec jinaryCodec;
+
+    @Autowired
+    private JinarySchemaGenerator schemaGenerator;
 
     @LocalServerPort
     private int port;
@@ -63,6 +71,26 @@ class JinaryHttpMessageConverterTest {
 
         UserPayload payload = jinaryCodec.decode(response.body(), UserPayload.class);
         assertThat(payload).isEqualTo(DEFAULT_USER);
+    }
+
+    @Test
+    void streamsDelimitedBinaryPayloadsFromDtoStream() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl("/test/stream/users")))
+                .header("Accept", "application/x-jinary-stream")
+                .GET()
+                .build();
+
+        HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.headers().firstValue("content-type"))
+                .hasValue("application/x-jinary-stream");
+        assertThat(readDelimitedUsers(response.body())).containsExactly(
+                new UserPayload(1, "Sanghwa", "sanghwa@example.com"),
+                new UserPayload(2, "Ralph", "ralph@example.com"),
+                new UserPayload(3, "Proto", "proto@example.com")
+        );
     }
 
     @Test
@@ -178,5 +206,19 @@ class JinaryHttpMessageConverterTest {
 
     private String baseUrl(String path) {
         return "http://localhost:" + port + path;
+    }
+
+    private List<UserPayload> readDelimitedUsers(byte[] body) throws Exception {
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(body);
+        List<UserPayload> users = new ArrayList<>();
+        while (inputStream.available() > 0) {
+            DynamicMessage.Builder builder = DynamicMessage.newBuilder(
+                    schemaGenerator.generate(UserPayload.class).messageDescriptor()
+            );
+            builder.mergeDelimitedFrom(inputStream);
+            DynamicMessage message = builder.build();
+            users.add(jinaryCodec.decode(message.toByteArray(), UserPayload.class));
+        }
+        return users;
     }
 }

@@ -9,6 +9,8 @@ import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -37,6 +39,18 @@ public class JinaryCodec {
         });
         DynamicMessage message = buildMessage(schema.messageDescriptor(), source);
         return message.toByteArray();
+    }
+
+    public void writeDelimited(Object value, OutputStream outputStream) throws IOException {
+        if (value == null) {
+            throw new IllegalArgumentException("Cannot write a null Jinary stream element");
+        }
+
+        JinarySchema schema = schemaGenerator.generate(value.getClass());
+        Map<String, Object> source = objectMapper.convertValue(value, new TypeReference<>() {
+        });
+        DynamicMessage message = buildMessage(schema.messageDescriptor(), source);
+        message.writeDelimitedTo(outputStream);
     }
 
     public <T> T decode(byte[] payload, Class<T> targetType) {

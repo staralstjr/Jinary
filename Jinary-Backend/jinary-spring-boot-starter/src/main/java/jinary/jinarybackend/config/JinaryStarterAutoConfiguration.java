@@ -3,6 +3,7 @@ package jinary.jinarybackend.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jinary.jinarybackend.jinary.JinaryCodec;
 import jinary.jinarybackend.jinary.JinaryHttpMessageConverter;
+import jinary.jinarybackend.jinary.JinaryStreamingHttpMessageConverter;
 import jinary.jinarybackend.jinary.JinarySchemaGenerator;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -33,5 +34,11 @@ public class JinaryStarterAutoConfiguration {
     @ConditionalOnMissingBean
     public JinaryHttpMessageConverter jinaryHttpMessageConverter(JinaryCodec codec) {
         return new JinaryHttpMessageConverter(codec);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public JinaryStreamingHttpMessageConverter jinaryStreamingHttpMessageConverter(JinaryCodec codec) {
+        return new JinaryStreamingHttpMessageConverter(codec);
     }
 }
