@@ -434,9 +434,21 @@ function create(config: JinaryConfig) {
         }
     }
 
+    async function* instanceStream<T>(
+        url: string,
+        options: JinarySchemaOptions,
+        requestOptions?: JinaryRequestOptions,
+    ): AsyncGenerator<T, void, unknown> {
+        const fullURL = config.baseURL + url;
+        const baseURL = resolveBaseURL(options.baseURL, config.baseURL);
+        const messageType = await loadSchema(baseURL, options.schema);
+        yield* performStream<T>(fullURL, messageType, requestOptions, config);
+    }
+
     return {
         get: instanceGet,
         post: instancePost,
+        stream: instanceStream,
     };
 }
 
