@@ -34,6 +34,32 @@ interface JinaryRequestOptions {
 
 type DecodeFunction<T> = (binary: Uint8Array) => T;
 
+// length-delimited protobuf 청크에서 varint 길이 prefix를 읽어들임.
+// buffer가 varint 전체를 담고 있지 않으면 null 반환 → 다음 청크 기다림.
+function tryReadVarint(
+    buffer: Uint8Array,
+    startPos: number,
+): { value: number; bytesRead: number } | null {
+    let result = 0;
+    let shift = 0;
+    let pos = startPos;
+    while (pos < buffer.length) {
+        if (pos - startPos >= 5) {
+            throw new Error(
+                'varint too long (max 5 bytes for uint32 length prefix)',
+            );
+        }
+        const byte = buffer[pos];
+        result |= (byte & 0x7f) << shift;
+        pos++;
+        if ((byte & 0x80) === 0) {
+            return { value: result >>> 0, bytesRead: pos - startPos };
+        }
+        shift += 7;
+    }
+    return null;
+}
+
 function buildInit(
     requestOptions?: JinaryRequestOptions,
     config?: JinaryConfig,
@@ -212,6 +238,88 @@ async function performPost<T>(
     };
 }
 
+async function* performStream<T>(
+    fullURL: string,
+    messageType: protobuf.Type,
+    requestOptions?: JinaryRequestOptions,
+    config?: JinaryConfig,
+): AsyncGenerator<T, void, unknown> {
+    const { init, cleanup } = buildInit(requestOptions, config);
+    const headers = {
+        Accept: 'application/x-jinary-stream',
+        ...(init.headers as Record<string, string> | undefined),
+    };
+
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+    try {
+        const response = await fetch(fullURL, { ...init, headers });
+        if (!response.ok) {
+            throw new Error(
+                `서버 응답 오류: ${response.status} ${response.statusText}`,
+            );
+        }
+        if (!response.body) {
+            throw new Error(
+                '응답 body가 없습니다 (스트리밍 미지원 환경?)',
+            );
+        }
+
+        reader = response.body.getReader();
+        let buffer = new Uint8Array(0);
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) {
+                if (buffer.length > 0) {
+                    throw new Error(
+                        `스트림 종료 시점에 미완성 메시지가 남아있습니다 (${buffer.length} bytes)`,
+                    );
+                }
+                break;
+            }
+
+            // 누적 버퍼에 새 청크 append
+            const merged = new Uint8Array(buffer.length + value.length);
+            merged.set(buffer, 0);
+            merged.set(value, buffer.length);
+            buffer = merged;
+
+            // 완성된 메시지만큼 반복해서 yield, 남는 부분은 다음 청크와 합침
+            while (true) {
+                const varintResult = tryReadVarint(buffer, 0);
+                if (!varintResult) break; // 길이 prefix가 아직 부족
+                const { value: msgLength, bytesRead: lengthBytes } =
+                    varintResult;
+                const totalNeeded = lengthBytes + msgLength;
+                if (buffer.length < totalNeeded) break; // 메시지 본문이 아직 부족
+
+                const messageBytes = buffer.subarray(
+                    lengthBytes,
+                    totalNeeded,
+                );
+                const decoded = messageType.decode(messageBytes);
+                const obj = messageType.toObject(decoded, {
+                    longs: Number,
+                    enums: String,
+                    defaults: true,
+                }) as T;
+
+                buffer = buffer.slice(totalNeeded);
+                yield obj;
+            }
+        }
+    } finally {
+        if (reader) {
+            try {
+                await reader.cancel();
+            } catch {
+                // 취소 실패는 무시 (이미 닫혀있을 수 있음)
+            }
+        }
+        cleanup();
+    }
+}
+
 async function get<T>(
     url: string,
     decodeFunction: DecodeFunction<T>,
@@ -275,6 +383,16 @@ async function post<T>(
     }
 }
 
+async function* stream<T>(
+    url: string,
+    options: JinarySchemaOptions,
+    requestOptions?: JinaryRequestOptions,
+): AsyncGenerator<T, void, unknown> {
+    const baseURL = resolveBaseURL(options.baseURL);
+    const messageType = await loadSchema(baseURL, options.schema);
+    yield* performStream<T>(url, messageType, requestOptions);
+}
+
 function create(config: JinaryConfig) {
     async function instanceGet<T>(
         url: string,
@@ -322,7 +440,7 @@ function create(config: JinaryConfig) {
     };
 }
 
-export const jinary = { create, get, post, loadSchema };
+export const jinary = { create, get, post, stream, loadSchema };
 export type {
     JinaryMeta,
     JinaryResponse,
