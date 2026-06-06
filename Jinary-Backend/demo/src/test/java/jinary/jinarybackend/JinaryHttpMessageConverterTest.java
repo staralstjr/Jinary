@@ -1,6 +1,8 @@
 package jinary.jinarybackend;
 
 import com.google.protobuf.DescriptorProtos.FileDescriptorProto;
+import com.google.protobuf.Descriptors.Descriptor;
+import com.google.protobuf.Descriptors.FieldDescriptor;
 import com.google.protobuf.DynamicMessage;
 import jinary.jinarybackend.dto.UserPayload;
 import jinary.jinarybackend.jinary.JinaryCodec;
@@ -90,6 +92,28 @@ class JinaryHttpMessageConverterTest {
                 new UserPayload(1, "Sanghwa", "sanghwa@example.com"),
                 new UserPayload(2, "Ralph", "ralph@example.com"),
                 new UserPayload(3, "Proto", "proto@example.com")
+        );
+    }
+
+    @Test
+    void streamsConfiguredLargeDelimitedBinaryPayloadsForVisualVerification() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUrl("/test/stream/users-large?count=5")))
+                .header("Accept", "application/x-jinary-stream")
+                .GET()
+                .build();
+
+        HttpResponse<byte[]> response = httpClient.send(request, HttpResponse.BodyHandlers.ofByteArray());
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.headers().firstValue("content-type"))
+                .hasValue("application/x-jinary-stream");
+        assertThat(readDefaultAwareDelimitedUsers(response.body())).containsExactly(
+                new UserPayload(0, "User-0", "user0@example.com"),
+                new UserPayload(1, "User-1", "user1@example.com"),
+                new UserPayload(2, "User-2", "user2@example.com"),
+                new UserPayload(3, "User-3", "user3@example.com"),
+                new UserPayload(4, "User-4", "user4@example.com")
         );
     }
 
@@ -218,6 +242,26 @@ class JinaryHttpMessageConverterTest {
             builder.mergeDelimitedFrom(inputStream);
             DynamicMessage message = builder.build();
             users.add(jinaryCodec.decode(message.toByteArray(), UserPayload.class));
+        }
+        return users;
+    }
+
+    private List<UserPayload> readDefaultAwareDelimitedUsers(byte[] body) throws Exception {
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(body);
+        Descriptor descriptor = schemaGenerator.generate(UserPayload.class).messageDescriptor();
+        FieldDescriptor idField = descriptor.findFieldByName("id");
+        FieldDescriptor nameField = descriptor.findFieldByName("name");
+        FieldDescriptor emailField = descriptor.findFieldByName("email");
+        List<UserPayload> users = new ArrayList<>();
+        while (inputStream.available() > 0) {
+            DynamicMessage.Builder builder = DynamicMessage.newBuilder(descriptor);
+            builder.mergeDelimitedFrom(inputStream);
+            DynamicMessage message = builder.build();
+            users.add(new UserPayload(
+                    ((Number) message.getField(idField)).intValue(),
+                    message.getField(nameField).toString(),
+                    message.getField(emailField).toString()
+            ));
         }
         return users;
     }

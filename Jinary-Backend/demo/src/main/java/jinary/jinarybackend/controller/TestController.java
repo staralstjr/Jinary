@@ -14,9 +14,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @Tag(name = "Jinary Demo", description = "Sample endpoints for JSON and Jinary binary payload exchange.")
@@ -61,6 +63,30 @@ public class TestController {
                 new UserPayload(2, "Ralph", "ralph@example.com"),
                 new UserPayload(3, "Proto", "proto@example.com")
         );
+    }
+
+    @JinaryStream
+    @Operation(summary = "Stream many DTOs slowly for visual Jinary streaming verification")
+    @ApiResponse(
+            responseCode = "200",
+            description = "Length-delimited Jinary protobuf stream with per-item delay",
+            content = @Content(mediaType = JinaryMediaTypes.APPLICATION_JINARY_STREAM)
+    )
+    @GetMapping(value = "/test/stream/users-large", produces = JinaryMediaTypes.APPLICATION_JINARY_STREAM)
+    public Stream<UserPayload> streamUsersLarge(@RequestParam(defaultValue = "1000") int count) {
+        return IntStream.range(0, count)
+                .mapToObj(index -> {
+                    sleepForVisualStreaming();
+                    return new UserPayload(index, "User-" + index, "user" + index + "@example.com");
+                });
+    }
+
+    private void sleepForVisualStreaming() {
+        try {
+            Thread.sleep(20);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     // 파라미터는 바이너리 데이터, 하지만 Jinary를 통해 자동으로 UserPayload라는 자바 객체로 바꿔줌
