@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useJinary, useJinaryMutation } from 'jinary/react';
+import { useJinary, useJinaryMutation, useJinaryStream } from 'jinary/react';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080';
 const SCHEMA_CONFIG = { schema: 'UserPayload', baseURL: BACKEND_URL };
 
@@ -30,6 +30,25 @@ function App() {
     SCHEMA_CONFIG,
   );
   const [postSent, setPostSent] = useState(null);
+
+  const {
+    chunks: streamChunks,
+    loading: streamLoading,
+    error: streamError,
+    start: startStream,
+    stop: stopStream,
+  } = useJinaryStream(
+    BACKEND_URL + '/test/stream/users',
+    SCHEMA_CONFIG,
+  );
+
+  const streamStatus = streamError
+    ? '에러'
+    : streamLoading
+    ? '수신 중'
+    : streamChunks.length > 0
+    ? '완료'
+    : '대기';
 
   async function handlePostTest() {
     const payload = {
@@ -321,11 +340,107 @@ function App() {
                 같은 데이터의 JSON 크기: <strong>{postMeta.jsonSize} bytes</strong>
               </div>
             </div>
-          )}                                                                                                                                                                              
+          )}
+        </div>
+
+        <div
+          style={{
+            marginTop: '40px',
+            padding: '20px',
+            borderRadius: '12px',
+            border: '2px solid #51cf66',
+            background: '#f0fff4',
+          }}
+        >
+          <h2 style={{ fontSize: '20px', marginBottom: '12px' }}>
+            스트리밍 데모 (서버 → 클라)
+          </h2>
+          <p style={{ color: '#666', marginBottom: '16px', fontSize: '14px' }}>
+            length-delimited protobuf 청크를 받아 즉시 디코딩 → 리스트에 누적 표시
+          </p>
+
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+            <button
+              onClick={startStream}
+              disabled={streamLoading}
+              style={{
+                padding: '12px 24px',
+                background: streamLoading ? '#ccc' : '#51cf66',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: streamLoading ? 'wait' : 'pointer',
+                fontWeight: 'bold',
+              }}
+            >
+              {streamLoading ? '수신 중...' : '스트림 시작'}
+            </button>
+            <button
+              onClick={stopStream}
+              disabled={!streamLoading}
+              style={{
+                padding: '12px 24px',
+                background: !streamLoading ? '#ccc' : '#ff6b6b',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: !streamLoading ? 'not-allowed' : 'pointer',
+                fontWeight: 'bold',
+              }}
+            >
+              중단
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              gap: '16px',
+              marginBottom: '16px',
+              fontSize: '14px',
+            }}
+          >
+            <div>
+              받은 항목 수: <strong>{streamChunks.length}</strong>
+            </div>
+            <div>
+              상태: <strong>{streamStatus}</strong>
+            </div>
+          </div>
+
+          {streamError && (
+            <div style={{ color: '#c92a2a', marginBottom: '16px' }}>
+              에러: {streamError}
+            </div>
+          )}
+
+          {streamChunks.length > 0 && (
+            <ol
+              style={{
+                background: 'white',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                padding: '16px 16px 16px 32px',
+                margin: 0,
+              }}
+            >
+              {streamChunks.map((u, i) => (
+                <li
+                  key={`${u.id}-${i}`}
+                  style={{ marginBottom: '6px', fontSize: '14px' }}
+                >
+                  <strong>{u.name}</strong>
+                  <span style={{ color: '#999', marginLeft: '8px' }}>
+                    id: {u.id} | {u.email}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
     </div>
   );
-  
+
 }
 
 export default App;
