@@ -111,7 +111,7 @@ async function loadSchema(
     });
     if (!response.ok) {
         throw new Error(
-            `스키마 로드 실패: ${response.status} ${response.statusText}`,
+            `Failed to load schema: ${response.status} ${response.statusText}`,
         );
     }
 
@@ -137,7 +137,7 @@ function resolveBaseURL(
     const baseURL = optionsBaseURL ?? fallback;
     if (!baseURL) {
         throw new Error(
-            'baseURL이 지정되지 않았습니다. options.baseURL을 넘기거나 jinary.create({ baseURL })를 사용하세요.',
+            'baseURL is not specified. Pass options.baseURL or use jinary.create({ baseURL }).',
         );
     }
     return baseURL;
@@ -180,7 +180,7 @@ async function performGet<T>(
     const response = await fetch(fullURL, { ...init, headers });
     if (!response.ok) {
         throw new Error(
-            `서버 응답 오류: ${response.status} ${response.statusText}`,
+            `Server responded with error: ${response.status} ${response.statusText}`,
         );
     }
     const arrayBuffer = await response.arrayBuffer();
@@ -220,7 +220,7 @@ async function performPost<T>(
     });
     if (!response.ok) {
         throw new Error(
-            `서버 응답 오류: ${response.status} ${response.statusText}`,
+            `Server responded with error: ${response.status} ${response.statusText}`,
         );
     }
     const json = (await response.json()) as T;
@@ -255,12 +255,12 @@ async function* performStream<T>(
         const response = await fetch(fullURL, { ...init, headers });
         if (!response.ok) {
             throw new Error(
-                `서버 응답 오류: ${response.status} ${response.statusText}`,
+                `Server responded with error: ${response.status} ${response.statusText}`,
             );
         }
         if (!response.body) {
             throw new Error(
-                '응답 body가 없습니다 (스트리밍 미지원 환경?)',
+                'Response body is missing (streaming may be unsupported in this environment)',
             );
         }
 
@@ -272,7 +272,7 @@ async function* performStream<T>(
             if (done) {
                 if (buffer.length > 0) {
                     throw new Error(
-                        `스트림 종료 시점에 미완성 메시지가 남아있습니다 (${buffer.length} bytes)`,
+                        `Incomplete message remained at stream end (${buffer.length} bytes)`,
                     );
                 }
                 break;

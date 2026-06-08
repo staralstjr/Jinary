@@ -1,23 +1,84 @@
 {
-  "name": "jinary",
-  "version": "0.0.1",
-  "description": "axios처럼 간편한 바이너리 통신 라이브러리 (Zero-Configuration Protobuf bridge)",
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts",
-    "./react": "./src/react/index.ts"
-  },
-  "files": [
-    "src"
-  ],
-  "dependencies": {
-    "protobufjs": "^8.0.0"
-  },
-  "peerDependencies": {
-    "react": "^18 || ^19"
-  },
-  "devDependencies": {
-    "react": "^19.2.4",
-    "@types/react": "^19.2.14"
-  }
+    "name": "jinary",
+    "version": "0.1.0",
+    "description": "Zero-configuration Protobuf bridge for Spring Boot and React. Use plain DTOs while wire traffic is Protobuf binary.",
+    "type": "module",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "sideEffects": false,
+    "exports": {
+        ".": {
+            "import": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            },
+            "require": {
+                "types": "./dist/index.d.cts",
+                "default": "./dist/index.cjs"
+            }
+        },
+        "./react": {
+            "import": {
+                "types": "./dist/react/index.d.ts",
+                "default": "./dist/react/index.js"
+            },
+            "require": {
+                "types": "./dist/react/index.d.cts",
+                "default": "./dist/react/index.cjs"
+            }
+        }
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "tsup",
+        "dev": "tsup --watch",
+        "prepublishOnly": "npm run build"
+    },
+    "keywords": [
+        "protobuf",
+        "binary",
+        "axios",
+        "react",
+        "spring-boot",
+        "streaming",
+        "protobufjs",
+        "rest",
+        "dto"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/staralstjr/Jinary.git",
+        "directory": "packages/jinary"
+    },
+    "bugs": {
+        "url": "https://github.com/staralstjr/Jinary/issues"
+    },
+    "homepage": "https://github.com/staralstjr/Jinary#readme",
+    "author": "MinseokKwon <staralstjr@naver.com>",
+    "license": "MIT",
+    "engines": {
+        "node": ">=18"
+    },
+    "dependencies": {
+        "protobufjs": "^8.0.0"
+    },
+    "peerDependencies": {
+        "react": "^18 || ^19"
+    },
+    "peerDependenciesMeta": {
+        "react": {
+            "optional": true
+        }
+    },
+    "devDependencies": {
+        "@types/react": "^19.2.14",
+        "react": "^19.2.4",
+        "tsup": "^8.5.1",
+        "typescript": "^5.9.3"
+    }
 }
