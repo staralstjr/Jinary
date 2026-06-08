@@ -38,7 +38,7 @@ function App() {
     start: startStream,
     stop: stopStream,
   } = useJinaryStream(
-    BACKEND_URL + '/test/stream/users',
+    BACKEND_URL + '/test/stream/users-large?count=100',
     SCHEMA_CONFIG,
   );
 
