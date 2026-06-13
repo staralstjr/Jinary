@@ -32,34 +32,14 @@
 
 <br/>
 
-## 4. 데일리 개발 Commit
-
-매일 개발을 하며 PR을 올릴 때 추가합니다.
-
-- frontend
-  - [2026.03.16]
-    [test/#2]: Protobuf 데이터를 받을 수 있는 예제 코드 및 라이브러리 설치 - Protobuf 데이터가 백엔드로부터 왔을 때 JSON 데이터로 온 경우와 비교할 수 있는 코드를 구현했습니다.
-
-  - [2026.03.23]
-    [test/#2]: 환경변수 저장 env 파일 생성 - 백엔드 api 주소가 들어올 것을 대비해, .env 파일로 백엔드 경로를 절대경로로 저장합니다.
-
-  - [2026.04.01]
-    [feat/#1]: 백엔드 없이, proto 타입 데이터를 주고받으며 비교하는 테스트 로직 - 백엔드의 개발이 조금 늦어져, 백엔드 없이 목데이터로 값을 많이 만들어서 Proto데이터를 받고, JSON과 비교를 할 수 있도록 구현하였습니다.
-
-  - [2026.04.05]
-    [feat/#2]: 백엔드에게 바이너리 데이터를 받고 proto로 변환해서 사용하여 데이터 크기 비교 - 백엔드 배포 완료 후, 실제 서버에서  
-    protobuf 바이너리 데이터를 받아 디코딩하고 JSON과 크기를 비교하는 로직을 구현했습니다.
-
-  - [2026.04.07]
-    [feat/#3]: useJinary 커스텀 훅 제작 - 반복되는 바이너리 fetch 로직을 재사용 가능한 커스텀 훅으로 분리했습니다. decodeFunction을  
-    외부에서 주입받는 구조로 확장성을 확보했으며, 아직 뼈대만 잡은 상태입니다.
-
-  - [2026.04.13] - front-useJinaryHook branch
-    [feat/#4-mySelf] useJinary 훅 제작 중, 초기 뼈대에 typeScript로 안정성 붙이기 - 기존의 뼈대에 typeScript로 타입을 명시해줬습니다.
-    1. 함수 시그니처를 제네릭으로 변경하고
-    2. useState에 각각 타입들을 명시해줬습니다.
-    3. 메타데이터는 성능 측정을 위해 두었지만, 그래도 인터페이스로 타입을 명시해줬습니다. useState에도 인터페이스 타입 명시했습니다.
-    4. try catch로 간단하게 에러 처리를 하고있지만, unknown 타입이라 타입에 가드를 줬습니다.
-       [feat/#5-mySelf] 마운트시 자동으로 fetch 되도록 useEffect 구현
-
 - backend
+
+<br/>
+
+## 4. 배포 (Distribution)
+
+- 📦 **npm 패키지:** [https://www.npmjs.com/package/jinary](https://www.npmjs.com/package/jinary)
+
+  ```bash
+  npm install jinary
+  ```
